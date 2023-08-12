@@ -1,0 +1,22 @@
+{
+	"type": "module",
+	"name": "blur-adder",
+	"version": "1.0.0",
+	"main": " ",
+	"scripts": {
+		"start": "tsx index.ts",
+		"debug": "tsx index.ts --inspect --inspect-brk"
+	},
+	"author": "",
+	"license": "ISC",
+	"description": "",
+	"devDependencies": {
+		"@types/node": "^20.4.5"
+	},
+	"dependencies": {
+		"cheerio": "1.0.0-rc.12",
+		"sharp": "^0.32.4",
+		"tsx": "^3.12.7",
+		"undici": "^5.22.1"
+	}
+}

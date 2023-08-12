@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "checkJs": true,
+        "module": "ESNext",
+        "noEmit": true,
+        "target": "ESNext",
+        "strict": true,
+        "noImplicitAny": false,
+        "lib": [
+            "ESNext"
+        ],
+        "moduleResolution": "nodenext",
+        "types": [
+            "node"
+        ]
+    },
+    "exclude": [
+        "node_modules"
+    ],
+    "include": ["**/*.ts", "**/*.js"]
+}
