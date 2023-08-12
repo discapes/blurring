@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "fcntl.h": "c",
+        "mman.h": "c",
+        "unistd.h": "c",
+        "shm.h": "c",
+        "xdg-shell-client-protocol.h": "c"
+    }
+}

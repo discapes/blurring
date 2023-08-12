@@ -6,5 +6,7 @@ CFLAGS = -std=c17 \
 	-Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-const-variable \
 	-fsanitize=undefined -lGL -lEGL -lGLEW -DGLEW_EGL
 
+# -lwayland-client
+
 prog: main.c 
 	$(CC) $(CFLAGS) main.c -o prog
