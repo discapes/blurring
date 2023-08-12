@@ -1,9 +1,11 @@
 {
+    "editor.formatOnPaste": false,
+    "editor.formatOnSave": true,
     "files.associations": {
-        "fcntl.h": "c",
-        "mman.h": "c",
+        "iostream": "cpp",
         "unistd.h": "c",
-        "shm.h": "c",
-        "xdg-shell-client-protocol.h": "c"
+        "bitset": "c",
+        "string_view": "c",
+        "debug.h": "c"
     }
 }
