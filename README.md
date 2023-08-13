@@ -1,8 +1,8 @@
 # blurring
 
-Simple program to blur an image. Uses the EGL DRM platform to initialize OpenGL, so 
-it can be run even without a display server. Run the program without arguments or with
--h to see usage.
+Simple program to blur an image, do edge detection or other convolution kernels. Uses the EGL DRM
+platform to initialize OpenGL, so it can be run even without a display server. Run the program without 
+arguments or with -h to see usage.
 
 - Compiletime dependencies: meson
 - Runtime dependencies: mesa, glew, glfw, stb_image
@@ -18,6 +18,7 @@ Some examples:
 - `time ./build/blurring -i images/mountain-medium.jpg -o output.bmp`
 - `./build/blurring -i images/mountain-medium.jpg -o output.bmp -c /dev/dri/renderD129`
 - `./build/blurring -i images/mountain-medium.jpg -g`
+- `./build/blurring -i images/mountain-medium.jpg -o output.bmp -f edge.frag -c /dev/dri/renderD129`
 
 Notes:
 

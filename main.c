@@ -135,14 +135,14 @@ GLFWwindow *initializeGLFWOpenGL(int width, int height)
 	return window;
 }
 
-GLuint initializeShaders()
+GLuint initializeShaders(char *vertexShaderFile, char *fragmentShaderFile)
 {
-	char *vertexShaderSource = readFile("shader.vert");
+	char *vertexShaderSource = readFile(vertexShaderFile);
 	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, (char const *const *)&vertexShaderSource, NULL);
 	glCompileShader(vertexShader);
 
-	char *fragmentShaderSource = readFile("shader.frag");
+	char *fragmentShaderSource = readFile(fragmentShaderFile);
 	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragmentShader, 1, (char const *const *)&fragmentShaderSource, NULL);
 	glCompileShader(fragmentShader);
@@ -176,7 +176,9 @@ const char *usage = "Usage: \n"
 					"-i <inputfile>     - input file name (required)						\n"
 					"-g                 - display output to screen (-o or -g is required)	\n"
 					"-o <outputfile>    - write output to file (-o or -g is required)		\n"
-					"-c <card>          - use specific dri device (allowed only with -o)	\n";
+					"-c <card>          - use specific dri device (allowed only with -o)	\n"
+					"-f <shaderfile>    - set the fragment shader to use					\n"
+					"-v <shaderfile>    - set the vertex shader to use						\n";
 
 GLuint createTexture(uint8_t *data, int width, int height)
 {
@@ -193,6 +195,8 @@ int main(int argc, char *argv[])
 	char *inputFile = NULL;
 	char *outputFile = NULL;
 	char *card = NULL;
+	char *fragmentShaderFile = NULL;
+	char *vertexShaderFile = NULL;
 	bool offScreen = true;
 
 	if (argc == 1)
@@ -202,7 +206,7 @@ int main(int argc, char *argv[])
 	}
 
 	char currentOption;
-	while ((currentOption = getopt(argc, argv, "hi:o:gc:")) != -1)
+	while ((currentOption = getopt(argc, argv, "hi:o:gc:f:v:")) != -1)
 		switch (currentOption)
 		{
 		case 'i':
@@ -210,6 +214,12 @@ int main(int argc, char *argv[])
 			break;
 		case 'o':
 			outputFile = optarg;
+			break;
+		case 'f':
+			fragmentShaderFile = optarg;
+			break;
+		case 'v':
+			vertexShaderFile = optarg;
 			break;
 		case 'g':
 			offScreen = false;
@@ -237,6 +247,10 @@ int main(int argc, char *argv[])
 
 	if (!card)
 		card = "/dev/dri/renderD128";
+	if (!fragmentShaderFile)
+		fragmentShaderFile = "shader.frag";
+	if (!vertexShaderFile)
+		vertexShaderFile = "shader.vert";
 
 	if (!offScreen)
 	{
@@ -268,7 +282,7 @@ int main(int argc, char *argv[])
 
 	initializeDebugOutput();
 	printStats();
-	initializeShaders();
+	initializeShaders(vertexShaderFile, fragmentShaderFile);
 	if (offScreen)
 		// we use the render target texture as the source texture
 		initializeOffscreenTarget(inputData, width, height);
