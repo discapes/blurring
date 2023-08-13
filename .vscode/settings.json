@@ -11,6 +11,7 @@
         "assert.h": "c",
         "glfw3.h": "c",
         "egl.h": "c",
-        "eglplatform.h": "c"
+        "eglplatform.h": "c",
+        "debug_output.h": "c"
     }
 }

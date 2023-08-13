@@ -1,4 +1,6 @@
 #include <GL/glew.h>
+#include <GL/gl.h>
+#include <GL/glext.h>
 #include <EGL/egl.h>
 #include <stdio.h>
 #include "debug_output.h"
@@ -22,8 +24,32 @@ void initializeDebugOutput(void)
     }
 }
 
+static void printExtensions(void)
+{
+    GLint n = 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &n);
+
+    printf("Extensions: ");
+    for (GLint i = 0; i < n; i++)
+    {
+        const char *extension =
+            (const char *)glGetStringi(GL_EXTENSIONS, i);
+        if (i)
+            printf(", ");
+        printf("%s", extension);
+    }
+    printf("\n");
+}
+
 void printStats(void)
 {
+
+    printf("Vendor: %s\n", glGetString(GL_VENDOR));
+    printf("Version: %s\n", glGetString(GL_VERSION));
+    printf("Renderer: %s\n", glGetString(GL_RENDERER));
+    printf("Shading language version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+    printExtensions();
+
     GLint work_group_count[3] = {0};
     for (unsigned i = 0; i < 3; i++)
         glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT,

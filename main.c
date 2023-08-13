@@ -21,10 +21,10 @@
 
 void initializeEGLDRMOpenGL(void)
 {
-    EGLDisplay eglDisplay;
     EGLConfig eglConfig;
     EGLint eglNumConfig;
     EGLContext eglContext;
+    EGLDisplay *eglDisplay;
     EGLint eglContextAttrs[] = {
         EGL_CONTEXT_OPENGL_DEBUG, EGL_TRUE,
         EGL_CONTEXT_MAJOR_VERSION, 4,
@@ -34,6 +34,7 @@ void initializeEGLDRMOpenGL(void)
         EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
         EGL_NONE};
 
+    // 128 for nvidia
     int32_t fd = open("/dev/dri/renderD128", O_RDWR);
     if (!fd)
         die("Can't open render node");
@@ -42,10 +43,16 @@ void initializeEGLDRMOpenGL(void)
     if (!gbm)
         die("Can't gbm_create_device");
 
-    if (!(eglDisplay = eglGetPlatformDisplay(EGL_PLATFORM_GBM_MESA, gbm, NULL)))
+    eglDisplay = eglGetPlatformDisplay(EGL_PLATFORM_GBM_MESA, gbm, NULL);
+    if (!eglDisplay)
         die("Can't eglGetDisplay: %s", eglGetErrorString(eglGetError()));
     if (!eglInitialize(eglDisplay, NULL, NULL))
         die("Can't eglInitialize: %s", eglGetErrorString(eglGetError()));
+
+    printf("Initialized EGL on DRM\n");
+    printf("EGL_VERSION: %s\n", eglQueryString(eglDisplay, EGL_VERSION));
+    printf("EGL_CLIENT_APIS: %s\n", eglQueryString(eglDisplay, EGL_CLIENT_APIS));
+    printf("EGL_VENDOR: %s\n", eglQueryString(eglDisplay, EGL_VENDOR));
 
     const char *eglExtensions = eglQueryString(eglDisplay, EGL_EXTENSIONS);
     // printf("EGL extensions: %s", eglExtensions);
@@ -55,18 +62,21 @@ void initializeEGLDRMOpenGL(void)
     if (!eglChooseConfig(eglDisplay, eglConfigAttrs, &eglConfig, 1, &eglNumConfig))
         die("Can't eglChooseConfig: %s", eglGetErrorString(eglGetError()));
 
-    eglBindAPI(EGL_OPENGL_API); // important
-    if (!(eglContext = eglCreateContext(eglDisplay, eglConfig, EGL_NO_CONTEXT, eglContextAttrs)))
+    if (!eglBindAPI(EGL_OPENGL_API))
+        die("Can't eglBindAPI: %s", eglGetErrorString(eglGetError()));
+
+    eglContext = eglCreateContext(eglDisplay, eglConfig, EGL_NO_CONTEXT, eglContextAttrs);
+    if (!eglContext)
         die("Can't eglCreateContext: %s", eglGetErrorString(eglGetError()));
 
     if (!eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, eglContext))
         die("Can't eglMakeCurrent: %s", eglGetErrorString(eglGetError()));
 
+    printf("Initialized OpenGL context\n");
+
     GLenum glewErr = glewInit();
     if (glewErr != GLEW_OK)
         die("Can't glewInit: %s", glewGetErrorString(glewErr));
-
-    printf("Initialized EGL DRM OpenGL\n");
 }
 
 void initializeOffscreenTarget(int width, int height)
@@ -167,7 +177,7 @@ int main(int argc, char *argv[])
 {
     int width = 500;
     int height = 500;
-    bool useGLFWContext = true;
+    bool useGLFWContext = false;
 
     if (useGLFWContext)
         initializeGLFWOpenGL(width, height);
