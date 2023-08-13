@@ -46,7 +46,8 @@ EGLContext initializeEGLDRMOpenGL(void)
 
     // 128 for intel, 129 for nvidia
     // nvidia has memory leaks, lol
-    int32_t fd = open("/dev/dri/renderD128", O_RDWR);
+    // export LSAN_OPTIONS=fast_unwind_on_malloc=0,suppressions=lsan.supp
+    int32_t fd = open("/dev/dri/renderD129", O_RDWR);
     if (!fd)
         die("Can't open render node");
 
