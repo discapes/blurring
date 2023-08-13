@@ -16,3 +16,10 @@ Example usage:
 
 - `time ./build/blurring -i images/mountain-medium.jpg -o output.bmp -c /dev/dri/renderD129`
 - `./build/blurring -i images/mountain-medium.jpg -g`
+
+Notes:
+
+- When using an Nvidia render node in debug configuration, you might get
+	LeakSanitizer warnings. To suppress them, either disable sanitization in
+	configure_debug.sh, or `export LSAN_OPTIONS=fast_unwind_on_malloc=0,suppressions=lsan.supp`
+	

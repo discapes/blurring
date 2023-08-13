@@ -45,9 +45,6 @@ EGLContext initializeEGLDRMOpenGL(char *card)
 		EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
 		EGL_NONE};
 
-	// 128 for intel, 129 for nvidia
-	// nvidia has memory leaks, lol
-	// export LSAN_OPTIONS=fast_unwind_on_malloc=0,suppressions=lsan.supp
 	int32_t fd = open(card, O_RDWR);
 	if (fd == -1)
 		die("Can't open dri device %s", card);
