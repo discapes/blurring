@@ -12,3 +12,7 @@ Building:
 - run ./configure_release.sh OR ./configure_debug.sh
 - run ninja -C build
 
+Example usage:
+
+- `time ./build/blurring -i images/mountain-medium.jpg -o output.bmp -c /dev/dri/renderD129`
+- `./build/blurring -i images/mountain-medium.jpg -g`

@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
 {
 	char *inputFile = NULL;
 	char *outputFile = NULL;
-	char *card = "/dev/dri/renderD128";
+	char *card = NULL;
 	bool offScreen = true;
 
 	if (argc == 1)
@@ -247,10 +247,13 @@ int main(int argc, char *argv[])
 	if (card && !offScreen)
 		die("Card can only be specified with offscreen rendering");
 
+	if (!card)
+		card = "/dev/dri/renderD128";
+
 	int width,
 		height, inputChannels;
 
-	if (offScreen)
+	if (!offScreen)
 	{
 		stbi_set_flip_vertically_on_load(true);
 		stbi_flip_vertically_on_write(true);
