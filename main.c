@@ -81,6 +81,7 @@ void initializeEGLDRMOpenGL(void)
 
 void initializeOffscreenTarget(int width, int height)
 {
+    glViewport(0, 0, width, height); // important
     GLuint framebuffer = 0;
     glGenFramebuffers(1, &framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
