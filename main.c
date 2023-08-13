@@ -186,8 +186,13 @@ void initializeShaders()
 
 int main(int argc, char *argv[])
 {
-    int width = 500;
-    int height = 500;
+    int iwidth, iheight, inrChannels;
+    stbi_set_flip_vertically_on_load(true);
+    uint8_t *data = stbi_load("big.jpg", &iwidth, &iheight, &inrChannels, 0);
+
+    int width = iwidth;
+    int height = iheight;
+    printf("width: %d, height: %d\n", width, height);
     GLFWwindow *window = NULL;
     bool onScreen = false;
 
@@ -203,20 +208,21 @@ int main(int argc, char *argv[])
     if (!onScreen)
         initializeOffscreenTarget(width, height);
 
-    int iwidth, iheight, inrChannels;
-    uint8_t *data = stbi_load("input.png", &iwidth, &iheight, &inrChannels, 0);
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(data);
+    printf("Loaded texture\n");
 
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
+    printf("Finished drawing\n");
 
     if (onScreen)
     {
@@ -229,12 +235,15 @@ int main(int argc, char *argv[])
     else
     {
 
-        uint8_t pixels[width * height * 3];
+        uint8_t *pixels = malloc(width * height * 3);
         glBindTexture(GL_TEXTURE_2D, target.texture);
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        printf("Got tex image\n");
 
         stbi_flip_vertically_on_write(true);
-        stbi_write_png("output.png", width, height, 3, pixels, width * 3);
+        stbi_write_bmp("output.bmp", width, height, 3, pixels);
+        free(pixels);
     }
 
     printf("Done\n");
