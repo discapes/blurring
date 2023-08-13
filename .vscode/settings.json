@@ -6,6 +6,9 @@
         "unistd.h": "c",
         "bitset": "c",
         "string_view": "c",
-        "debug.h": "c"
+        "debug.h": "c",
+        "stb_image_write.h": "c",
+        "assert.h": "c",
+        "glfw3.h": "c"
     }
 }
