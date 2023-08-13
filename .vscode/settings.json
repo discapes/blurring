@@ -24,4 +24,5 @@
 	"editor.insertSpaces": false,
 	"editor.tabSize": 4,
 	"editor.detectIndentation": false,
+	"C_Cpp.default.compileCommands": "builddir/compile_commands.json",
 }

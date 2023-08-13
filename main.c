@@ -39,7 +39,7 @@ EGLContext initializeEGLDRMOpenGL(char *card)
 	EGLint eglContextAttrs[] = {
 		EGL_CONTEXT_OPENGL_DEBUG, EGL_TRUE,
 		EGL_CONTEXT_MAJOR_VERSION, 4,
-		EGL_CONTEXT_MINOR_VERSION, 6,
+		EGL_CONTEXT_MINOR_VERSION, 1,
 		EGL_NONE};
 	EGLint eglConfigAttrs[] = {
 		EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
@@ -120,7 +120,7 @@ GLFWwindow *initializeGLFWOpenGL(int width, int height)
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 	glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
 	glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
