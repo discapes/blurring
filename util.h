@@ -8,5 +8,4 @@ char *readFile(char *fileName);
         fprintf(stderr, __VA_ARGS__); \
         fprintf(stderr, "\n");        \
         exit(1);                      \
-    }                                 \
-    0
+    }

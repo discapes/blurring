@@ -45,7 +45,8 @@ EGLContext initializeEGLDRMOpenGL(void)
         EGL_NONE};
 
     // 128 for intel, 129 for nvidia
-    int32_t fd = open("/dev/dri/renderD129", O_RDWR);
+    // nvidia has memory leaks, lol
+    int32_t fd = open("/dev/dri/renderD128", O_RDWR);
     if (!fd)
         die("Can't open render node");
 
@@ -203,10 +204,13 @@ int main(int argc, char *argv[])
         stbi_flip_vertically_on_write(true);
     }
 
+    printf("PID: %d\n", getpid());
     printf("Using %s target\n", offScreen ? "offscreen" : "onscreen");
     printf("Loading image %s... ", inputFile);
     fflush(stdout);
-    uint8_t *inputData = stbi_load("big.jpg", &width, &height, &_channels, 0);
+    uint8_t *inputData = stbi_load(inputFile, &width, &height, &_channels, 0);
+    if (!inputData)
+        die("Failed to load %s", inputFile);
     printf("DONE - width: %d, height: %d\n", width, height);
 
     GLFWwindow *window = NULL;
