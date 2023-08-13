@@ -24,3 +24,6 @@ Notes:
 - When using an Nvidia render node in debug configuration, you might get
 	LeakSanitizer warnings. To suppress them, either disable sanitization in
 	configure_debug.sh, or `export LSAN_OPTIONS=fast_unwind_on_malloc=0,suppressions=lsan.supp`
+- There's also a TypeScript program to do the same thing, inside `./nodejs-impl/`. It can be run
+	with `pnpm -C nodejs-impl install && pnpm -C nodejs-impl/ start $PWD/images/mountain-medium.jpg $PWD/output.bmp 3 6`
+	for around same amount of blur. It looks a bit nicer, but is ~70x slower.
