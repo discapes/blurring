@@ -1,7 +1,0 @@
-{
-  "files.associations": {
-    "*.embeddedhtml": "html",
-    "egl.h": "c",
-    "eglplatform.h": "c"
-  }
-}

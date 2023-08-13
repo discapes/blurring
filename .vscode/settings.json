@@ -9,6 +9,8 @@
         "debug.h": "c",
         "stb_image_write.h": "c",
         "assert.h": "c",
-        "glfw3.h": "c"
+        "glfw3.h": "c",
+        "egl.h": "c",
+        "eglplatform.h": "c"
     }
 }

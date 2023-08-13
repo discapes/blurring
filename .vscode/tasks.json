@@ -5,7 +5,7 @@
             "type": "shell",
             "command": "ninja",
             "options": {
-                "cwd": "${workspaceFolder}/opengl/build"
+                "cwd": "${workspaceFolder}/build"
             },
             "problemMatcher": "$gcc",
             "group": {

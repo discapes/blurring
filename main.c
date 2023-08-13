@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 {
     int width = 500;
     int height = 500;
-    bool useGLFWContext = false;
+    bool useGLFWContext = true;
 
     if (useGLFWContext)
         initializeGLFWOpenGL(width, height);
