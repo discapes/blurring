@@ -138,12 +138,12 @@ void render()
 
 void initializeShaders()
 {
-    char *vertexShaderSource = readFile("vertex.glsl");
+    char *vertexShaderSource = readFile("shader.vert");
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, (char const *const *)&vertexShaderSource, NULL);
     glCompileShader(vertexShader);
 
-    char *fragmentShaderSource = readFile("frag.glsl");
+    char *fragmentShaderSource = readFile("shader.frag");
     unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, (char const *const *)&fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
