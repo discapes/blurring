@@ -91,7 +91,7 @@ EGLContext initializeEGLDRMOpenGL(char *card)
 	return eglContext;
 }
 
-struct OffscreenTarget initializeOffscreenTarget(int width, int height)
+struct OffscreenTarget initializeOffscreenTarget(uint8_t *data, int width, int height)
 {
 	struct OffscreenTarget target;
 
@@ -102,7 +102,7 @@ struct OffscreenTarget initializeOffscreenTarget(int width, int height)
 	glGenTextures(1, &target.texture);
 	glBindTexture(GL_TEXTURE_2D, target.texture);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -163,24 +163,6 @@ GLuint initializeShaders()
 	return shaderProgram;
 }
 
-GLuint createTexture(uint8_t *data, int width, int height)
-{
-	GLuint texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	return texture;
-}
-
-uint8_t *retrieveTexture(GLuint texture, int width, int height)
-{
-	uint8_t *pixels = malloc(width * height * 3);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-	return pixels;
-}
-
 void renderEmptyTriangle()
 {
 	GLuint VAO;
@@ -196,6 +178,16 @@ const char *usage = "Usage: \n"
 					"-o <outputfile>    - write output to file (-o or -g is required)		\n"
 					"-c <card>          - use specific dri device (allowed only with -o)	\n";
 
+GLuint createTexture(uint8_t *data, int width, int height)
+{
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	return texture;
+}
+
 int main(int argc, char *argv[])
 {
 	char *inputFile = NULL;
@@ -205,7 +197,6 @@ int main(int argc, char *argv[])
 
 	if (argc == 1)
 	{
-
 		printf("%s", usage);
 		exit(1);
 	}
@@ -247,14 +238,14 @@ int main(int argc, char *argv[])
 	if (!card)
 		card = "/dev/dri/renderD128";
 
-	int width,
-		height, inputChannels;
-
 	if (!offScreen)
 	{
 		stbi_set_flip_vertically_on_load(true);
 		stbi_flip_vertically_on_write(true);
 	}
+
+	int width, height, inputChannels;
+	GLFWwindow *window = NULL;
 
 	printf("PID: %d\n", getpid());
 	printf("Using %s target\n", offScreen ? "offscreen" : "onscreen");
@@ -264,38 +255,31 @@ int main(int argc, char *argv[])
 	if (!inputData)
 		die("Failed to load %s", inputFile);
 	if (inputChannels != 3)
-	{
 		die("Input image must have 3 channels. Try 'convert %s -alpha off %s' with ImageMagick", inputFile, inputFile);
-	}
 	printf("DONE - width: %d, height: %d\n", width, height);
-
-	GLFWwindow *window = NULL;
-	struct OffscreenTarget target;
 
 	if (offScreen)
 		initializeEGLDRMOpenGL(card);
 	else
 		window = initializeGLFWOpenGL(width, height);
 
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
 	initializeDebugOutput();
 	printStats();
 	initializeShaders();
 	if (offScreen)
-		target = initializeOffscreenTarget(width, height);
-
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	printf("Initialization complete\n");
-
-	printf("Sending image to GPU... ");
-	fflush(stdout);
-	GLuint inputTex = createTexture(inputData, width, height);
-	printf("DONE\n");
+		// we use the render target texture as the source texture
+		initializeOffscreenTarget(inputData, width, height);
+	else
+		createTexture(inputData, width, height);
 	stbi_image_free(inputData);
+
+	printf("Initialization complete\n");
 
 	printf("Rendering... ");
 	fflush(stdout);
-	glBindTexture(GL_TEXTURE_2D, inputTex);
 	renderEmptyTriangle();
 	printf("DONE\n");
 
@@ -303,7 +287,8 @@ int main(int argc, char *argv[])
 	{
 		printf("Retrieving image from GPU... ");
 		fflush(stdout);
-		uint8_t *outputData = retrieveTexture(target.texture, width, height);
+		uint8_t *outputData = malloc(width * height * 3);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, outputData);
 		printf("DONE\n");
 
 		printf("Writing image to %s... ", outputFile);
@@ -311,6 +296,7 @@ int main(int argc, char *argv[])
 		stbi_write_bmp(outputFile, width, height, 3, outputData);
 		printf("DONE\n");
 		free(outputData);
+
 		eglDestroyContext(eglGetCurrentDisplay(), eglGetCurrentContext());
 	}
 	else
@@ -318,6 +304,7 @@ int main(int argc, char *argv[])
 		glFlush();
 		while (!glfwWindowShouldClose(window))
 			glfwPollEvents();
+
 		glfwDestroyWindow(window);
 	}
 

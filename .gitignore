@@ -1,5 +1,5 @@
 prog
 blurring
 build/
-output.*
+output*
 images/*-big.*

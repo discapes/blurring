@@ -18,7 +18,10 @@
 		"dlfcn.h": "c",
 		"cstdint": "c",
 		"stdlib.h": "c",
-		"glew.h": "c"
+		"glew.h": "c",
+		"array": "c",
+		"string": "c",
+		"span": "c"
 	},
 	"editor.indentSize": "tabSize",
 	"editor.insertSpaces": false,
