@@ -1,4 +1,4 @@
-project('blurring', 'c', 'cpp', default_options : ['c_std=c17', 'cpp_std=c++20', 'warning_level=2', 'werror=true'])
+project('blurring', 'c', 'cpp', default_options : ['c_std=c17', 'cpp_std=c++20', 'warning_level=2', 'werror=true', 'b_sanitize=address,undefined'])
 
 
 src = ['main.c', 'debug_output.cpp', 'util.c', 'debug.c']

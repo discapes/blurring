@@ -1,7 +1,13 @@
 #version 460 core
-out vec4 FragColor;
+layout(location = 0) out vec3 color;
 
-void main()
-{
-    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+in vec2 texcoords;
+
+uniform sampler2D ourTexture;
+
+void main() {
+    vec3 texc = texture(ourTexture, texcoords).rgb;
+    vec3 basec = vec3(texcoords.x, texcoords.y, 0.0f);
+    color = mix(texc, basec, 0.5f);
+ //   color = vec3(1.0f, 0.5f, 0.2f);
 }

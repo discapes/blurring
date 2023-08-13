@@ -12,6 +12,9 @@
         "glfw3.h": "c",
         "egl.h": "c",
         "eglplatform.h": "c",
-        "debug_output.h": "c"
+        "debug_output.h": "c",
+        "stb_image.h": "c",
+        "renderdoc_app.h": "c",
+        "dlfcn.h": "c"
     }
 }

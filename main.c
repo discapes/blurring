@@ -15,9 +15,21 @@
 #include <unistd.h>
 #include "debug.h"
 #include "util.h"
+#include <dlfcn.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb/stb_image_write.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+
+static struct OffscreenTarget
+{
+    GLuint framebuffer;
+    GLuint texture;
+} target;
+
+static GLuint shader;
 
 void initializeEGLDRMOpenGL(void)
 {
@@ -34,8 +46,8 @@ void initializeEGLDRMOpenGL(void)
         EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
         EGL_NONE};
 
-    // 128 for nvidia
-    int32_t fd = open("/dev/dri/renderD128", O_RDWR);
+    // 128 for intel, 129 for nvidia
+    int32_t fd = open("/dev/dri/renderD129", O_RDWR);
     if (!fd)
         die("Can't open render node");
 
@@ -82,19 +94,17 @@ void initializeEGLDRMOpenGL(void)
 void initializeOffscreenTarget(int width, int height)
 {
     glViewport(0, 0, width, height); // important
-    GLuint framebuffer = 0;
-    glGenFramebuffers(1, &framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    glGenFramebuffers(1, &target.framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, target.framebuffer);
 
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glGenTextures(1, &target.texture);
+    glBindTexture(GL_TEXTURE_2D, target.texture);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target.texture, 0);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         die("Framebuffer not complete");
@@ -108,7 +118,7 @@ GLFWwindow *initializeGLFWOpenGL(int width, int height)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     GLFWwindow *window = glfwCreateWindow(width, height, "OpenGL", NULL, NULL);
     glfwMakeContextCurrent(window);
@@ -159,17 +169,17 @@ void initializeShaders()
     glShaderSource(fragmentShader, 1, (char const *const *)&fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
 
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
+    shader = glCreateProgram();
+    glAttachShader(shader, vertexShader);
+    glAttachShader(shader, fragmentShader);
+    glLinkProgram(shader);
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
     free(vertexShaderSource);
     free(fragmentShaderSource);
 
-    glUseProgram(shaderProgram);
+    glUseProgram(shader);
 
     printf("Initialized shaders\n");
 }
@@ -178,22 +188,54 @@ int main(int argc, char *argv[])
 {
     int width = 500;
     int height = 500;
-    bool useGLFWContext = false;
+    GLFWwindow *window = NULL;
+    bool onScreen = false;
 
-    if (useGLFWContext)
-        initializeGLFWOpenGL(width, height);
+    if (onScreen)
+        window = initializeGLFWOpenGL(width, height);
     else
         initializeEGLDRMOpenGL();
     initializeDebugOutput();
     printStats();
 
-    initializeOffscreenTarget(width, height);
     initializeShaders();
-    render();
 
-    int pixels[width * height * 3];
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-    stbi_write_png("output.png", width, height, 3, pixels, width * 3);
+    if (!onScreen)
+        initializeOffscreenTarget(width, height);
+
+    int iwidth, iheight, inrChannels;
+    uint8_t *data = stbi_load("input.png", &iwidth, &iheight, &inrChannels, 0);
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
+
+    GLuint VAO;
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    if (onScreen)
+    {
+        while (!glfwWindowShouldClose(window))
+        {
+            glfwSwapBuffers(window);
+            glfwPollEvents();
+        }
+    }
+    else
+    {
+
+        uint8_t pixels[width * height * 3];
+        glBindTexture(GL_TEXTURE_2D, target.texture);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+
+        stbi_flip_vertically_on_write(true);
+        stbi_write_png("output.png", width, height, 3, pixels, width * 3);
+    }
 
     printf("Done\n");
 
