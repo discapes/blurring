@@ -9,7 +9,12 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/blurring",
-            "args": [],
+            "args": [
+                "-i",
+                "images/tree-medium.png",
+                "-o",
+                "output.bmp"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
