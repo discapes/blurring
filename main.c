@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 
     int pixels[width * height * 3];
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-    stbi_write_bmp("output.bmp", width, height, 3, pixels);
+    stbi_write_png("output.png", width, height, 3, pixels, width * 3);
 
     printf("Done\n");
 
