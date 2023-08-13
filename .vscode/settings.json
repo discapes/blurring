@@ -15,6 +15,9 @@
         "debug_output.h": "c",
         "stb_image.h": "c",
         "renderdoc_app.h": "c",
-        "dlfcn.h": "c"
+        "dlfcn.h": "c",
+        "cstdint": "c",
+        "stdlib.h": "c",
+        "glew.h": "c"
     }
 }

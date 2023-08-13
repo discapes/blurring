@@ -23,15 +23,13 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
-static struct OffscreenTarget
+struct OffscreenTarget
 {
     GLuint framebuffer;
     GLuint texture;
-} target;
+};
 
-static GLuint shader;
-
-void initializeEGLDRMOpenGL(void)
+EGLContext initializeEGLDRMOpenGL(void)
 {
     EGLConfig eglConfig;
     EGLint eglNumConfig;
@@ -62,9 +60,9 @@ void initializeEGLDRMOpenGL(void)
         die("Can't eglInitialize: %s", eglGetErrorString(eglGetError()));
 
     printf("Initialized EGL on DRM\n");
-    printf("EGL_VERSION: %s\n", eglQueryString(eglDisplay, EGL_VERSION));
-    printf("EGL_CLIENT_APIS: %s\n", eglQueryString(eglDisplay, EGL_CLIENT_APIS));
-    printf("EGL_VENDOR: %s\n", eglQueryString(eglDisplay, EGL_VENDOR));
+    printf("EGL version: %s\n", eglQueryString(eglDisplay, EGL_VERSION));
+    printf("EGL client APIs: %s\n", eglQueryString(eglDisplay, EGL_CLIENT_APIS));
+    printf("EGL vendor: %s\n", eglQueryString(eglDisplay, EGL_VENDOR));
 
     const char *eglExtensions = eglQueryString(eglDisplay, EGL_EXTENSIONS);
     // printf("EGL extensions: %s", eglExtensions);
@@ -89,10 +87,14 @@ void initializeEGLDRMOpenGL(void)
     GLenum glewErr = glewInit();
     if (glewErr != GLEW_OK)
         die("Can't glewInit: %s", glewGetErrorString(glewErr));
+
+    return eglContext;
 }
 
-void initializeOffscreenTarget(int width, int height)
+struct OffscreenTarget initializeOffscreenTarget(int width, int height)
 {
+    struct OffscreenTarget target;
+
     glViewport(0, 0, width, height); // important
     glGenFramebuffers(1, &target.framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, target.framebuffer);
@@ -109,7 +111,9 @@ void initializeOffscreenTarget(int width, int height)
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         die("Framebuffer not complete");
 
-    printf("Initialized buffers\n");
+    printf("Initialized offscreen target\n");
+
+    return target;
 }
 
 GLFWwindow *initializeGLFWOpenGL(int width, int height)
@@ -119,6 +123,7 @@ GLFWwindow *initializeGLFWOpenGL(int width, int height)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
     glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     GLFWwindow *window = glfwCreateWindow(width, height, "OpenGL", NULL, NULL);
     glfwMakeContextCurrent(window);
@@ -130,34 +135,7 @@ GLFWwindow *initializeGLFWOpenGL(int width, int height)
     return window;
 }
 
-void render()
-{
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // left
-        0.5f, -0.5f, 0.0f,  // right
-        0.0f, 0.5f, 0.0f    // top
-    };
-
-    unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-
-    printf("Rendered\n");
-}
-
-void initializeShaders()
+GLuint initializeShaders()
 {
     char *vertexShaderSource = readFile("shader.vert");
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -169,84 +147,121 @@ void initializeShaders()
     glShaderSource(fragmentShader, 1, (char const *const *)&fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
 
-    shader = glCreateProgram();
-    glAttachShader(shader, vertexShader);
-    glAttachShader(shader, fragmentShader);
-    glLinkProgram(shader);
+    GLuint shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
     free(vertexShaderSource);
     free(fragmentShaderSource);
 
-    glUseProgram(shader);
+    glUseProgram(shaderProgram);
 
     printf("Initialized shaders\n");
+    return shaderProgram;
 }
 
-int main(int argc, char *argv[])
+GLuint createTexture(uint8_t *data, int width, int height)
 {
-    int iwidth, iheight, inrChannels;
-    stbi_set_flip_vertically_on_load(true);
-    uint8_t *data = stbi_load("big.jpg", &iwidth, &iheight, &inrChannels, 0);
-
-    int width = iwidth;
-    int height = iheight;
-    printf("width: %d, height: %d\n", width, height);
-    GLFWwindow *window = NULL;
-    bool onScreen = false;
-
-    if (onScreen)
-        window = initializeGLFWOpenGL(width, height);
-    else
-        initializeEGLDRMOpenGL();
-    initializeDebugOutput();
-    printStats();
-
-    initializeShaders();
-
-    if (!onScreen)
-        initializeOffscreenTarget(width, height);
-
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
-    printf("Loaded texture\n");
+    return texture;
+}
 
+uint8_t *retrieveTexture(GLuint texture, int width, int height)
+{
+    uint8_t *pixels = malloc(width * height * 3);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    return pixels;
+}
+
+void renderEmptyTriangle()
+{
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
-    printf("Finished drawing\n");
+}
 
-    if (onScreen)
+int main(int argc, char *argv[])
+{
+    int width, height, _channels;
+    char *inputFile = argv[1];
+    char *outputFile = argv[2];
+    bool offScreen = argc <= 3 || !!strcmp(argv[3], "-g");
+
+    if (offScreen)
     {
-        while (!glfwWindowShouldClose(window))
-        {
-            glfwSwapBuffers(window);
-            glfwPollEvents();
-        }
+        stbi_set_flip_vertically_on_load(true);
+        stbi_flip_vertically_on_write(true);
+    }
+
+    printf("Using %s target\n", offScreen ? "offscreen" : "onscreen");
+    printf("Loading image %s... ", inputFile);
+    fflush(stdout);
+    uint8_t *inputData = stbi_load("big.jpg", &width, &height, &_channels, 0);
+    printf("DONE - width: %d, height: %d\n", width, height);
+
+    GLFWwindow *window = NULL;
+    struct OffscreenTarget target;
+
+    if (offScreen)
+        initializeEGLDRMOpenGL();
+    else
+        window = initializeGLFWOpenGL(width, height);
+
+    initializeDebugOutput();
+    printStats();
+    initializeShaders();
+    if (offScreen)
+        target = initializeOffscreenTarget(width, height);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    printf("Initialization complete\n");
+
+    printf("Sending image to GPU... ");
+    fflush(stdout);
+    GLuint inputTex = createTexture(inputData, width, height);
+    printf("DONE\n");
+    stbi_image_free(inputData);
+
+    printf("Rendering... ");
+    fflush(stdout);
+    glBindTexture(GL_TEXTURE_2D, inputTex);
+    renderEmptyTriangle();
+    printf("DONE\n");
+
+    if (offScreen)
+    {
+        printf("Retrieving image from GPU... ");
+        fflush(stdout);
+        uint8_t *outputData = retrieveTexture(target.texture, width, height);
+        printf("DONE\n");
+
+        printf("Writing image to %s... ", outputFile);
+        fflush(stdout);
+        stbi_write_bmp(outputFile, width, height, 3, outputData);
+        printf("DONE\n");
+        free(outputData);
+        eglDestroyContext(eglGetCurrentDisplay(), eglGetCurrentContext());
     }
     else
     {
-
-        uint8_t *pixels = malloc(width * height * 3);
-        glBindTexture(GL_TEXTURE_2D, target.texture);
-        glPixelStorei(GL_PACK_ALIGNMENT, 1);
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-        printf("Got tex image\n");
-
-        stbi_flip_vertically_on_write(true);
-        stbi_write_bmp("output.bmp", width, height, 3, pixels);
-        free(pixels);
+        glFlush();
+        while (!glfwWindowShouldClose(window))
+            glfwPollEvents();
+        glfwDestroyWindow(window);
     }
 
-    printf("Done\n");
+    printf("Finished\n");
 
     return 0;
 }

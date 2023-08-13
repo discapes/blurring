@@ -48,33 +48,7 @@ void printStats(void)
     printf("Version: %s\n", glGetString(GL_VERSION));
     printf("Renderer: %s\n", glGetString(GL_RENDERER));
     printf("Shading language version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-    printExtensions();
-
-    GLint work_group_count[3] = {0};
-    for (unsigned i = 0; i < 3; i++)
-        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT,
-                        i,
-                        &work_group_count[i]);
-    printf("GL_MAX_COMPUTE_WORK_GROUP_COUNT: %d, %d, %d\n",
-           work_group_count[0],
-           work_group_count[1],
-           work_group_count[2]);
-
-    GLint work_group_size[3] = {0};
-    for (unsigned i = 0; i < 3; i++)
-        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, i, &work_group_size[i]);
-    printf("GL_MAX_COMPUTE_WORK_GROUP_SIZE: %d, %d, %d\n",
-           work_group_size[0],
-           work_group_size[1],
-           work_group_size[2]);
-
-    GLint max_invocations;
-    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &max_invocations);
-    printf("GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS: %d\n", max_invocations);
-
-    GLint mem_size;
-    glGetIntegerv(GL_MAX_COMPUTE_SHARED_MEMORY_SIZE, &mem_size);
-    printf("GL_MAX_COMPUTE_SHARED_MEMORY_SIZE: %d\n", mem_size);
+    // printExtensions();
 }
 
 #define CASE_STR(value) \
